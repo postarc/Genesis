@@ -7,6 +7,10 @@ if [ "$(sudo id -u)" != "0" ]; then
 fi
 
 HBAR="---------------------------------------------------------------------------------------"
+BINLINK='https://github.com/genesisofficial/genesis/releases/download/v'
+FIRST_TAG='genesis-'
+END_TAG='-x86_64-linux-gnu.tar.gz'
+
 
 # import messages
 source <(curl -sL https://gist.githubusercontent.com/ssowellsvt/8c83352379ab33dc5b462be1a80f156d/raw/messages.sh)
