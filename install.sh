@@ -12,14 +12,20 @@ FIRST_TAG='genesis-'
 END_TAG='-x86_64-linux-gnu.tar.gz'
 GENESIS_BRANCH="master"
 DEFAULT_PORT=7233
+COIN_PORT=7233
+DEFAULT_RPCPORT=7234
 ERR=$(dpkg-query -l lsof | grep Err)
 clear
 if [ -z "$ERR" ]; then apt install -y lsof >/dev/null 2>&1 ; fi 
+
 while [ -n "$(sudo lsof -i -s TCP:LISTEN -P -n | grep $DEFAULT_PORT)" ]
 do
 ((DEFAULT_PORT--))
 done
-
+while [ -n "$(sudo lsof -i -s TCP:LISTEN -P -n | grep $DEFAULT_RPCPORT)" ]
+do
+((DEFAULT_RPCPORT++))
+done
 # import messages
 source <(curl -sL https://gist.githubusercontent.com/ssowellsvt/8c83352379ab33dc5b462be1a80f156d/raw/messages.sh)
 
@@ -461,6 +467,7 @@ GENESIS_CONF=$(cat <<EOF
 # RPC #
 rpcuser=user
 rpcpassword=$RPC_PASSWORD
+rpcport=$DEFAULT_RPCPORT
 rpcallowip=127.0.0.1
 # General #
 listen=1
@@ -473,6 +480,7 @@ debug=0
 masternode=1
 masternodeprivkey=$MASTERNODE_PRIVATE_KEY
 externalip=$EXTERNAL_ADDRESS
+#masternodeaddr=$EXTERNAL_ADDRESS:$COIN_PORT
 port=$MASTERNODE_PORT
 # Addnodes #
 addnode=mainnet1.genesisnetwork.io
