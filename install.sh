@@ -23,46 +23,6 @@ done
 # import messages
 source <(curl -sL https://gist.githubusercontent.com/ssowellsvt/8c83352379ab33dc5b462be1a80f156d/raw/messages.sh)
 
-GENESIS_CONF=$(cat <<EOF
-# RPC #
-rpcuser=user
-rpcpassword=$RPC_PASSWORD
-rpcallowip=127.0.0.1
-# General #
-listen=1
-server=1
-daemon=1
-txindex=1
-maxconnections=24
-debug=0
-# Masternode #
-masternode=1
-masternodeprivkey=$MASTERNODE_PRIVATE_KEY
-externalip=$EXTERNAL_ADDRESS
-port=$MASTERNODE_PORT
-# Addnodes #
-addnode=mainnet1.genesisnetwork.io
-addnode=mainnet2.genesisnetwork.io
-EOF
-)
-
-# genesisd.service config
-GENESISD_SERVICE=$(cat <<EOF
-[Unit]
-Description=Genesis Official Service
-After=network.target iptables.service firewalld.service
- 
-[Service]
-Type=forking
-User=genesis
-ExecStart=/usr/local/bin/genesisd
-ExecStop=/usr/local/bin/genesis-cli stop && sleep 20 && /usr/bin/killall genesisd
-ExecReload=/usr/local/bin/genesis-cli stop && sleep 20 && /usr/local/bin/genesisd
- 
-[Install]
-WantedBy=multi-user.target
-EOF
-)
 
 SENTINEL_CONF=$(cat <<EOF
 # genesis conf location
@@ -336,7 +296,7 @@ create_and_configure_genesis_user(){
   echo "$MESSAGE_CREATE_USER"
   read -e -p "Input User name: " GUSER
   # create a genesis user if it doesn't exist
-  grep -q '^$GUSER:' /etc/passwd || sudo adduser --disabled-password --gecos "" $GUSER
+  grep -q -E "^$GUSER:" /etc/passwd || sudo adduser --disabled-password --gecos "" $GUSER
   #sudo adduser $GUSER
   # add alias to .bashrc to run genesis-cli as genesis user
   #grep -q "genxcli\(\)" ~/.bashrc || echo "genxcli() { sudo su -c \"genesis-cli \$*\" genesis; }" >> ~/.bashrc
@@ -421,7 +381,7 @@ if [ "$LC_ALL" = "" ]; then export LC_ALL="$LANG"; fi
 create_and_configure_genesis_user
 
 # check to see if there is already a genesis user on the system
-if grep -q '^$GUSER:' /etc/passwd; then
+if grep -q -E "^$GUSER:" /etc/passwd; then
   clear
   echo "$MESSAGE_UPGRADE"
   echo ""
@@ -510,7 +470,49 @@ pause
 clear
 
 # genesis conf file
+GENESIS_CONF=$(cat <<EOF
+# RPC #
+rpcuser=user
+rpcpassword=$RPC_PASSWORD
+rpcallowip=127.0.0.1
+# General #
+listen=1
+server=1
+daemon=1
+txindex=1
+maxconnections=24
+debug=0
+# Masternode #
+masternode=1
+masternodeprivkey=$MASTERNODE_PRIVATE_KEY
+externalip=$EXTERNAL_ADDRESS
+port=$MASTERNODE_PORT
+# Addnodes #
+addnode=mainnet1.genesisnetwork.io
+addnode=mainnet2.genesisnetwork.io
+EOF
+)
 
+# genesisd.service config
+GENESISD_SERVICE=$(cat <<EOF
+[Unit]
+Description=Genesis Official Service
+After=network.target iptables.service firewalld.service
+ 
+[Service]
+Type=forking
+EOF
+)
+GENESISD_SERVICE=$GENESISD_SERVICE$(echo)$(echo -e "User=$GUSER")
+GENESISD_SERVICE=$GENESISD_SERVICE$(cat <<EOF
+ExecStart=/usr/local/bin/genesisd
+ExecStop=/usr/local/bin/genesis-cli stop && sleep 20 && /usr/bin/killall genesisd
+ExecReload=/usr/local/bin/genesis-cli stop && sleep 20 && /usr/local/bin/genesisd
+ 
+[Install]
+WantedBy=multi-user.target
+EOF
+)
 
 # functions to install a masternode from scratch
 
