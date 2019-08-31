@@ -212,10 +212,14 @@ stop_genesisd(){
 
 bootstrap(){
   echo "$MESSAGE_BOOTSTRAP"
-  wget https://genxcommunityhelper.blob.core.windows.net/bootstraps/latest/bootstrap.zip
-  unzip -o bootstrap.zip -d /home/$GUSER/.genesis/main/
-  sudo chown -R $GUSER:$GUSER /home/$GUSER/.genesis/main/
-  sudo rm -R bootstrap.zip
+  echo -n "Download bootstrap?(y)"
+  read ANSWER
+  if [ ( -z $ANSWER ) || ( $ANSWER = 'y') ]; then 
+     wget https://genxcommunityhelper.blob.core.windows.net/bootstraps/latest/bootstrap.zip
+	 unzip -o bootstrap.zip -d /home/$GUSER/.genesis/main/
+	 sudo chown -R $GUSER:$GUSER /home/$GUSER/.genesis/main/
+	 sudo rm -R bootstrap.zip
+  fi
 }
   
 clear
