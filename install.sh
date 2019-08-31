@@ -11,7 +11,6 @@ BINLINK='https://github.com/genesisofficial/genesis/releases/download/v'
 FIRST_TAG='genesis-'
 END_TAG='-x86_64-linux-gnu.tar.gz'
 
-
 # import messages
 source <(curl -sL https://gist.githubusercontent.com/ssowellsvt/8c83352379ab33dc5b462be1a80f156d/raw/messages.sh)
 
@@ -136,7 +135,6 @@ download (){
   rm -rf $FIRST_TAG$MIDLE_TAG
 }
 
-
 install_sentinel(){
   echo "$MESSAGE_SENTINEL"
   # go home
@@ -232,7 +230,7 @@ bootstrap(){
   echo "$MESSAGE_BOOTSTRAP"
   echo -n "Download bootstrap?(y)"
   read ANSWER
-  if [ -z $ANSWER ] || [ $ANSWER = 'y' ]; then
+   if [ -z $ANSWER ] || [ $ANSWER = 'y' ]; then
      wget https://genxcommunityhelper.blob.core.windows.net/bootstraps/latest/bootstrap.zip
 	 unzip -o bootstrap.zip -d /home/$GUSER/.genesis/main/
 	 sudo chown -R $GUSER:$GUSER /home/$GUSER/.genesis/main/
@@ -257,11 +255,18 @@ upgrade() {
   git_checkout_branch # check out our branch
   clear
   stop_genesisd       # stop genesisd if it is running
-  autogen             # run ./autogen.sh
-  configure           # run ./configure
-  compile	      # compile 
-  install             # make and make install
-  
+  echo "Do you want compile bin files?(y):"
+  read ANSWER
+if [ $ANSWER = "" ] || [ $ANSWER = 'y' ]; then
+   autogen            # run ./autogen.sh
+   configure          # run ./configure
+   compile            # compile
+   install            # install the binaries
+else
+   download
+fi
+clear
+
   # maybe upgrade sentinel
   if [ "$IS_UPGRADE_SENTINEL" = "" ] || [ "$IS_UPGRADE_SENTINEL" = "y" ] || [ "$IS_UPGRADE_SENTINEL" = "Y" ]; then
     install_sentinel
@@ -378,6 +383,8 @@ masternode_private_key(){
 masternode_private_key
 
 # read -e -p "Configure for Mainnet? [Y/N]: " IS_MAINNET
+
+maybe_prompt_for_swap_file
 
 # Generating Random Passwords
 RPC_PASSWORD=$(cat /dev/urandom | tr -dc 'a-zA-Z0-9' | fold -w 32 | head -n 1)
@@ -511,7 +518,7 @@ git_checkout_branch
 clear
 
 # run the build steps
-echo -n "Do you want compile bin files?(y):"
+echo "Do you want compile bin files?(y):"
 read ANSWER
 if [ -z $ANSWER ] || [ $ANSWER = 'y' ]; then
    autogen
