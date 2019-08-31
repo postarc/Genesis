@@ -203,7 +203,7 @@ configure_sentinel(){
   sudo chmod +x /usr/local/bin/sentinel-ping
 
   # setup cron for genesis user
-  sudo crontab -r -u $GUSER
+  #sudo crontab -r -u $GUSER
   sudo crontab -l -u $GUSER | grep sentinel-ping || echo "* * * * * /usr/local/bin/sentinel-ping" | sudo crontab -u $GUSER -
   
   clear
