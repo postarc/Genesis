@@ -241,9 +241,8 @@ upgrade() {
   stop_genesisd       # stop genesisd if it is running
   autogen             # run ./autogen.sh
   configure           # run ./configure
-  compile             # make and make install
-  make_install        # install the binaries
-
+  compile_install     # make and make install
+  
   # maybe upgrade sentinel
   if [ "$IS_UPGRADE_SENTINEL" = "" ] || [ "$IS_UPGRADE_SENTINEL" = "y" ] || [ "$IS_UPGRADE_SENTINEL" = "Y" ]; then
     install_sentinel
@@ -495,8 +494,7 @@ clear
 # run the build steps
 autogen
 configure
-compile
-make_install
+compile_install
 clear
 
 create_and_configure_genesis_user
