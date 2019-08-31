@@ -17,7 +17,7 @@ clear
 if [ -z "$ERR" ]; then apt install -y lsof >/dev/null 2>&1 ; fi 
 while [ -n "$(sudo lsof -i -s TCP:LISTEN -P -n | grep $DEFAULT_PORT)" ]
 do
-((DEFAULT_PORT++))
+((DEFAULT_PORT--))
 done
 
 # import messages
