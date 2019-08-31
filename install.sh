@@ -357,8 +357,6 @@ masternode_private_key
 
 # read -e -p "Configure for Mainnet? [Y/N]: " IS_MAINNET
 
-maybe_prompt_for_swap_file
-
 # Generating Random Passwords
 RPC_PASSWORD=$(cat /dev/urandom | tr -dc 'a-zA-Z0-9' | fold -w 32 | head -n 1)
 
