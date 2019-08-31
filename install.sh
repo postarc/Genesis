@@ -525,14 +525,20 @@ git_checkout_branch
 clear
 
 # run the build steps
-read -e -p "Press Y for compile bin files of any key for downloading [Y/n]:" ANSWER
-if [ -z $ANSWER ] || [ $ANSWER = 'y' ] || [ $ANSWER = 'Y' ]; then
+ANSWER='y'
+if [ -f /usr/lib/systemd/system/genesisd ]; then 
+	read -e -p "Bin files exist. Do you recompile? [y/N]:" ANSWER
+#else
+	#read -e -p "Press Y for compile bin files or any key for downloading [y/N]:" ANSWER
+	#if [ ! -z $ANSWER ] || [ ! $ANSWER = 'y' ] || [ ! $ANSWER = 'Y' ]; then
+	#	download
+	#fi
+fi
+if [ $ANSWER = 'y' ] || [ $ANSWER = 'Y' ]; then
    autogen
    configure
    compile
    install
-else
-   download
 fi
 clear
 
