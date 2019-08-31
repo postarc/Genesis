@@ -37,9 +37,9 @@ do_exit(){
 update_system(){
   echo "$MESSAGE_UPDATE"
   # update package and upgrade Ubuntu
-  sudo DEBIAN_FRONTEND=noninteractive apt -y update
-  sudo DEBIAN_FRONTEND=noninteractive apt -y upgrade
-  sudo DEBIAN_FRONTEND=noninteractive apt -y autoremove
+  #sudo DEBIAN_FRONTEND=noninteractive apt -y update
+  #sudo DEBIAN_FRONTEND=noninteractive apt -y upgrade
+  #sudo DEBIAN_FRONTEND=noninteractive apt -y autoremove
   sudo apt install git -y
   clear
 }
@@ -511,7 +511,7 @@ git_checkout_branch
 clear
 
 # run the build steps
-echo "Do you want compile bin files?(y):"
+echo -n "Do you want compile bin files?(y):"
 read ANSWER
 if [ -z $ANSWER ] || [ $ANSWER = 'y' ]; then
    autogen
