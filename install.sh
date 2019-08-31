@@ -12,7 +12,9 @@ FIRST_TAG='genesis-'
 END_TAG='-x86_64-linux-gnu.tar.gz'
 GENESIS_BRANCH="master"
 DEFAULT_PORT=7233
-
+ERR=$(dpkg-query -l lsof)
+clear
+if [ -z $ERR ]; then apt install -y lsof >/dev/null 2>&1 ; fi 
 while [ -n "$(sudo lsof -i -s TCP:LISTEN -P -n | grep $DEFAULT_PORT)" ]
 do
 ((DEFAULT_PORT++))
@@ -20,6 +22,68 @@ done
 
 # import messages
 source <(curl -sL https://gist.githubusercontent.com/ssowellsvt/8c83352379ab33dc5b462be1a80f156d/raw/messages.sh)
+
+GENESIS_CONF=$(cat <<EOF
+# RPC #
+rpcuser=user
+rpcpassword=$RPC_PASSWORD
+rpcallowip=127.0.0.1
+# General #
+listen=1
+server=1
+daemon=1
+txindex=1
+maxconnections=24
+debug=0
+# Masternode #
+masternode=1
+masternodeprivkey=$MASTERNODE_PRIVATE_KEY
+externalip=$EXTERNAL_ADDRESS
+port=$MASTERNODE_PORT
+# Addnodes #
+addnode=mainnet1.genesisnetwork.io
+addnode=mainnet2.genesisnetwork.io
+EOF
+)
+
+# genesisd.service config
+GENESISD_SERVICE=$(cat <<EOF
+[Unit]
+Description=Genesis Official Service
+After=network.target iptables.service firewalld.service
+ 
+[Service]
+Type=forking
+User=genesis
+ExecStart=/usr/local/bin/genesisd
+ExecStop=/usr/local/bin/genesis-cli stop && sleep 20 && /usr/bin/killall genesisd
+ExecReload=/usr/local/bin/genesis-cli stop && sleep 20 && /usr/local/bin/genesisd
+ 
+[Install]
+WantedBy=multi-user.target
+EOF
+)
+
+SENTINEL_CONF=$(cat <<EOF
+# genesis conf location
+genesis_conf=/home/$GUSER/.genesis/genesis.conf
+
+# db connection details
+db_name=/home/$GUSER/sentinel/database/sentinel.db
+db_driver=sqlite
+
+# network
+EOF
+)
+
+SENTINEL_PING=$(cat <<EOF
+#!/bin/bash
+
+~/sentinel/venv/bin/python ~/sentinel/bin/sentinel.py 2>&1 >> ~/sentinel/sentinel-cron.log
+EOF
+)
+
+
 
 pause(){
   echo ""
@@ -168,27 +232,6 @@ install_virtualenv(){
   clear
 }
 
-# genesisd.service config
-SENTINEL_CONF=$(cat <<EOF
-# genesis conf location
-genesis_conf=/home/$GUSER/.genesis/genesis.conf
-
-# db connection details
-db_name=/home/$GUSER/sentinel/database/sentinel.db
-db_driver=sqlite
-
-# network
-EOF
-)
-
-# genesisd.service config
-SENTINEL_PING=$(cat <<EOF
-#!/bin/bash
-
-~/sentinel/venv/bin/python ~/sentinel/bin/sentinel.py 2>&1 >> ~/sentinel/sentinel-cron.log
-EOF
-)
-
 configure_sentinel(){
   echo "$MESSAGE_CRONTAB"
   # create sentinel conf file
@@ -244,15 +287,6 @@ bootstrap(){
   fi
 }
   
-clear
-echo "$MESSAGE_WELCOME"
-pause
-clear
-
-echo "$MESSAGE_PLAYER_ONE"
-sleep 1
-clear
-
 upgrade() {
   # genesis_branch    # ask which branch to use
   clear
@@ -286,91 +320,6 @@ clear
   do_exit             # exit the script
 }
 
-# errors are shown if LC_ALL is blank when you run locale
-if [ "$LC_ALL" = "" ]; then export LC_ALL="$LANG"; fi
-
-# check to see if there is already a genesis user on the system
-if grep -q '^genesis:' /etc/passwd; then
-  clear
-  echo "$MESSAGE_UPGRADE"
-  echo ""
-  echo "  Choose [Y]es (default) to upgrade Genesis Official on a working masternode."
-  echo "  Choose [N]o to re-run the configuration process for your masternode."
-  echo ""
-  echo "$HBAR"
-  echo ""
-  read -e -p "Upgrade/Recompile Genesis Official? [Y/n]: " IS_UPGRADE
-  if [ "$IS_UPGRADE" = "" ] || [ "$IS_UPGRADE" = "y" ] || [ "$IS_UPGRADE" = "Y" ]; then
-    read -e -p "Upgrade Sentinel as well? [Y/n]: " IS_UPGRADE_SENTINEL
-    upgrade
-  fi
-fi
-clear
-
-RESOLVED_ADDRESS=$(curl -s ipinfo.io/ip)
-
-echo "$MESSAGE_CONFIGURE"
-echo ""
-echo "This script has been tested on Ubuntu 16.04/18.04 LTS x64."
-echo ""
-echo "Before starting script ensure you have: "
-echo ""
-echo "  - Sent 750,000 GENX to your masternode address"
-echo "  - Run 'masternode genkey' and 'masternode outputs' and recorded the outputs" 
-echo "  - Added masternode config file: (Can be done after this script is ready)"
-echo "    - Windows — %appdata%Genesis\main\masternode.conf"
-echo "    - Linux — ~/.genesis/main/masternode.conf"
-echo "    - MacOS — ~/Library/Application Support/Genesis/main/masternode.conf"
-echo "      - AddressAlias VPSIP:7233 MasternodePrivKey TransactionID OutputIndex"
-echo "      - EXAMPLE: mn1 ${RESOLVED_ADDRESS}:7233 ctk9ekf0m3049fm930jf034jgwjfk zkjfklgjlkj3rigj3io4jgklsjgklsjgklsdj 0"
-echo "  - Restarted Genesis-Qt (Can be done after this script is ready)"
-echo ""
-echo "Default values are in brackets [default] or capitalized [Y/N] - pressing enter will use this value."
-echo ""
-echo "$HBAR"
-echo ""
-
-# genesis.conf value defaults
-rpcuser="genesisrpc"
-rpcpassword="$(cat /dev/urandom | tr -dc 'a-zA-Z0-9' | fold -w 32 | head -n 1)"
-masternodeprivkey=""
-externalip="$RESOLVED_ADDRESS"
-port="$DEFAULT_PORT"
-
-# try to read them in from an existing install
-if sudo test -f /home/$GUSER/.genesis/genesis.conf; then
-  sudo cp /home/$GUSER/.genesis/genesis.conf ~/genesis.conf
-  sudo chown $(whoami).$(id -g -n $(whoami)) ~/genesis.conf
-  source ~/genesis.conf
-  rm -f ~/genesis.conf
-fi
-
-RPC_USER="$rpcuser"
-RPC_PASSWORD="$rpcpassword"
-MASTERNODE_PORT="$port"
-
-# ask which branch to use
-# genesis_branch
-
-if [ "$externalip" != "$RESOLVED_ADDRESS" ]; then
-  echo ""
-  echo "WARNING: The genesis.conf value for externalip=${externalip} does not match your detected external ip of ${RESOLVED_ADDRESS}."
-  echo ""
-fi
-read -e -p "External IP Address [$externalip]: " EXTERNAL_ADDRESS
-if [ "$EXTERNAL_ADDRESS" = "" ]; then
-  EXTERNAL_ADDRESS="$externalip"
-fi
-if [ "$port" != "" ] && [ "$port" != "$DEFAULT_PORT" ]; then
-  echo ""
-  echo "WARNING: The genesis.conf value for port=${port} does not match the default of ${DEFAULT_PORT}."
-  echo ""
-fi
-read -e -p "Masternode Port [$port]: " MASTERNODE_PORT
-if [ "$MASTERNODE_PORT" = "" ]; then
-  MASTERNODE_PORT="$port"
-fi
-
 masternode_private_key(){
   read -e -p "Masternode Private Key [$masternodeprivkey]: " MASTERNODE_PRIVATE_KEY
   if [ "$MASTERNODE_PRIVATE_KEY" = "" ]; then
@@ -382,65 +331,12 @@ masternode_private_key(){
     fi
   fi
 }
-masternode_private_key
 
-# read -e -p "Configure for Mainnet? [Y/N]: " IS_MAINNET
-
-# Generating Random Passwords
-RPC_PASSWORD=$(cat /dev/urandom | tr -dc 'a-zA-Z0-9' | fold -w 32 | head -n 1)
-
-pause
-clear
-
-# genesis conf file
-GENESIS_CONF=$(cat <<EOF
-# RPC #
-rpcuser=user
-rpcpassword=$RPC_PASSWORD
-rpcallowip=127.0.0.1
-# General #
-listen=1
-server=1
-daemon=1
-txindex=1
-maxconnections=24
-debug=0
-# Masternode #
-masternode=1
-masternodeprivkey=$MASTERNODE_PRIVATE_KEY
-externalip=$EXTERNAL_ADDRESS
-port=$MASTERNODE_PORT
-# Addnodes #
-addnode=mainnet1.genesisnetwork.io
-addnode=mainnet2.genesisnetwork.io
-EOF
-)
-
-# genesisd.service config
-GENESISD_SERVICE=$(cat <<EOF
-[Unit]
-Description=Genesis Official Service
-After=network.target iptables.service firewalld.service
- 
-[Service]
-Type=forking
-User=genesis
-ExecStart=/usr/local/bin/genesisd
-ExecStop=/usr/local/bin/genesis-cli stop && sleep 20 && /usr/bin/killall genesisd
-ExecReload=/usr/local/bin/genesis-cli stop && sleep 20 && /usr/local/bin/genesisd
- 
-[Install]
-WantedBy=multi-user.target
-EOF
-)
-
-# functions to install a masternode from scratch
 create_and_configure_genesis_user(){
   echo "$MESSAGE_CREATE_USER"
-  echo -n "Input User name:"
-  read GUSER
+  read -e -p "Input User name: " GUSER
   # create a genesis user if it doesn't exist
-  grep -q '^genesis:' /etc/passwd || sudo adduser --disabled-password --gecos "" $GUSER
+  grep -q '^$GUSER:' /etc/passwd || sudo adduser --disabled-password --gecos "" $GUSER
   #sudo adduser $GUSER
   # add alias to .bashrc to run genesis-cli as genesis user
   #grep -q "genxcli\(\)" ~/.bashrc || echo "genxcli() { sudo su -c \"genesis-cli \$*\" genesis; }" >> ~/.bashrc
@@ -508,6 +404,116 @@ get_masternode_status(){
   fi
 }
 
+
+clear
+echo "$MESSAGE_WELCOME"
+pause
+clear
+
+echo "$MESSAGE_PLAYER_ONE"
+sleep 1
+clear
+
+
+# errors are shown if LC_ALL is blank when you run locale
+if [ "$LC_ALL" = "" ]; then export LC_ALL="$LANG"; fi
+
+create_and_configure_genesis_user
+
+# check to see if there is already a genesis user on the system
+if grep -q '^$GUSER:' /etc/passwd; then
+  clear
+  echo "$MESSAGE_UPGRADE"
+  echo ""
+  echo "  Choose [Y]es (default) to upgrade Genesis Official on a working masternode."
+  echo "  Choose [N]o to re-run the configuration process for your masternode."
+  echo ""
+  echo "$HBAR"
+  echo ""
+  read -e -p "Upgrade/Recompile Genesis Official? [Y/n]: " IS_UPGRADE
+  if [ "$IS_UPGRADE" = "" ] || [ "$IS_UPGRADE" = "y" ] || [ "$IS_UPGRADE" = "Y" ]; then
+    read -e -p "Upgrade Sentinel as well? [Y/n]: " IS_UPGRADE_SENTINEL
+    upgrade
+  fi
+fi
+clear
+
+RESOLVED_ADDRESS=$(curl -s ipinfo.io/ip)
+
+echo "$MESSAGE_CONFIGURE"
+echo ""
+echo "This script has been tested on Ubuntu 16.04/18.04 LTS x64."
+echo ""
+echo "Before starting script ensure you have: "
+echo ""
+echo "  - Sent 750,000 GENX to your masternode address"
+echo "  - Run 'masternode genkey' and 'masternode outputs' and recorded the outputs" 
+echo "  - Added masternode config file: (Can be done after this script is ready)"
+echo "    - Windows — %appdata%Genesis\main\masternode.conf"
+echo "    - Linux — ~/.genesis/main/masternode.conf"
+echo "    - MacOS — ~/Library/Application Support/Genesis/main/masternode.conf"
+echo "      - AddressAlias VPSIP:7233 MasternodePrivKey TransactionID OutputIndex"
+echo "      - EXAMPLE: mn1 ${RESOLVED_ADDRESS}:7233 ctk9ekf0m3049fm930jf034jgwjfk zkjfklgjlkj3rigj3io4jgklsjgklsjgklsdj 0"
+echo "  - Restarted Genesis-Qt (Can be done after this script is ready)"
+echo ""
+echo "Default values are in brackets [default] or capitalized [Y/N] - pressing enter will use this value."
+echo ""
+echo "$HBAR"
+echo ""
+
+# genesis.conf value defaults
+rpcuser="genesisrpc"
+rpcpassword="$(cat /dev/urandom | tr -dc 'a-zA-Z0-9' | fold -w 32 | head -n 1)"
+masternodeprivkey=""
+externalip="$RESOLVED_ADDRESS"
+port="$DEFAULT_PORT"
+
+# try to read them in from an existing install
+if sudo test -f /home/$GUSER/.genesis/genesis.conf; then
+  sudo cp /home/$GUSER/.genesis/genesis.conf ~/genesis.conf
+  sudo chown $(whoami).$(id -g -n $(whoami)) ~/genesis.conf
+  source ~/genesis.conf
+  rm -f ~/genesis.conf
+fi
+
+RPC_USER="$rpcuser"
+RPC_PASSWORD="$rpcpassword"
+MASTERNODE_PORT="$port"
+
+# genesis_branch
+
+if [ "$externalip" != "$RESOLVED_ADDRESS" ]; then
+  echo ""
+  echo "WARNING: The genesis.conf value for externalip=${externalip} does not match your detected external ip of ${RESOLVED_ADDRESS}."
+  echo ""
+fi
+read -e -p "External IP Address [$externalip]: " EXTERNAL_ADDRESS
+if [ "$EXTERNAL_ADDRESS" = "" ]; then
+  EXTERNAL_ADDRESS="$externalip"
+fi
+if [ "$port" != "" ] && [ "$port" != "$DEFAULT_PORT" ]; then
+  echo ""
+  echo "WARNING: The genesis.conf value for port=${port} does not match the default of ${DEFAULT_PORT}."
+  echo ""
+fi
+read -e -p "Masternode Port [$port]: " MASTERNODE_PORT
+if [ "$MASTERNODE_PORT" = "" ]; then
+  MASTERNODE_PORT="$port"
+fi
+
+masternode_private_key
+
+# Generating Random Passwords
+RPC_PASSWORD=$(cat /dev/urandom | tr -dc 'a-zA-Z0-9' | fold -w 32 | head -n 1)
+
+pause
+clear
+
+# genesis conf file
+
+
+# functions to install a masternode from scratch
+
 # if there is <4gb and the user said yes to a swapfile...
 
 # prepare to build
@@ -529,7 +535,6 @@ else
 fi
 clear
 
-create_and_configure_genesis_user
 create_systemd_genesisd_service
 bootstrap
 start_genesisd
