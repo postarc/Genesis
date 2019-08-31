@@ -532,4 +532,7 @@ echo "  genesis-cli masternode status"
 echo ""
 echo "To update - simply type 'genxmasternode'"
 
+cd 
+rm -rf Genesis genesis
+
 do_exit
