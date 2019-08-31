@@ -497,8 +497,8 @@ install_ufw(){
 
 get_masternode_status(){
   echo ""
-  sudo su -c "genesis-cli mnsync status" genesis && \
-  sudo su -c "genesis-cli masternode status" genesis
+  sudo su -c "genesis-cli mnsync status" $GUSER && \
+  sudo su -c "genesis-cli masternode status" $GUSER
   echo ""
   read -e -p "Check again? [Y/N]: " CHECK_AGAIN
   if [ "$CHECK_AGAIN" = "" ] || [ "$CHECK_AGAIN" = "y" ] || [ "$CHECK_AGAIN" = "Y" ]; then
@@ -516,7 +516,7 @@ git_checkout_branch
 clear
 
 # run the build steps
-echo "Do you want compile bin files?(y):"
+echo -n "Do you want compile bin files?(y):"
 read ANSWER
 if [ -z $ANSWER ] || [ $ANSWER = 'y' ]; then
    autogen
