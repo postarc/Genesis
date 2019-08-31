@@ -228,9 +228,9 @@ stop_genesisd(){
 
 bootstrap(){
   echo "$MESSAGE_BOOTSTRAP"
-  echo -n "Download bootstrap?(y)"
+  echo -n "Download bootstrap? [Y/n]:"
   read ANSWER
-   if [ -z $ANSWER ] || [ $ANSWER = 'y' ]; then
+   if [ -z $ANSWER ] || [ $ANSWER = 'y' ] || [ $ANSWER = 'Y' ]; then
      wget https://genxcommunityhelper.blob.core.windows.net/bootstraps/latest/bootstrap.zip
 	 unzip -o bootstrap.zip -d /home/$GUSER/.genesis/main/
 	 sudo chown -R $GUSER:$GUSER /home/$GUSER/.genesis/main/
@@ -255,9 +255,9 @@ upgrade() {
   git_checkout_branch # check out our branch
   clear
   stop_genesisd       # stop genesisd if it is running
-  echo "Do you want compile bin files?(y):"
+  echo "Do you want compile bin files? [Y/n]:"
   read ANSWER
-if [ $ANSWER = "" ] || [ $ANSWER = 'y' ]; then
+if [ -z $ANSWER ] || [ $ANSWER = 'y' ] || [ $ANSWER = 'Y' ]; then
    autogen            # run ./autogen.sh
    configure          # run ./configure
    compile            # compile
@@ -294,9 +294,9 @@ if grep -q '^genesis:' /etc/passwd; then
   echo ""
   echo "$HBAR"
   echo ""
-  read -e -p "Upgrade/Recompile Genesis Official? [Y/N]: " IS_UPGRADE
+  read -e -p "Upgrade/Recompile Genesis Official? [Y/n]: " IS_UPGRADE
   if [ "$IS_UPGRADE" = "" ] || [ "$IS_UPGRADE" = "y" ] || [ "$IS_UPGRADE" = "Y" ]; then
-    read -e -p "Upgrade Sentinel as well? [Y/N]: " IS_UPGRADE_SENTINEL
+    read -e -p "Upgrade Sentinel as well? [Y/n]: " IS_UPGRADE_SENTINEL
     upgrade
   fi
 fi
@@ -383,6 +383,8 @@ masternode_private_key(){
 masternode_private_key
 
 # read -e -p "Configure for Mainnet? [Y/N]: " IS_MAINNET
+
+maybe_prompt_for_swap_file
 
 # Generating Random Passwords
 RPC_PASSWORD=$(cat /dev/urandom | tr -dc 'a-zA-Z0-9' | fold -w 32 | head -n 1)
@@ -500,7 +502,7 @@ get_masternode_status(){
   sudo su -c "genesis-cli mnsync status" $GUSER && \
   sudo su -c "genesis-cli masternode status" $GUSER
   echo ""
-  read -e -p "Check again? [Y/N]: " CHECK_AGAIN
+  read -e -p "Check again? [Y/n]: " CHECK_AGAIN
   if [ "$CHECK_AGAIN" = "" ] || [ "$CHECK_AGAIN" = "y" ] || [ "$CHECK_AGAIN" = "Y" ]; then
     get_masternode_status
   fi
@@ -516,9 +518,9 @@ git_checkout_branch
 clear
 
 # run the build steps
-echo -n "Do you want compile bin files?(y):"
+echo "Do you want compile bin files? [Y/n]:"
 read ANSWER
-if [ -z $ANSWER ] || [ $ANSWER = 'y' ]; then
+if [ -z $ANSWER ] || [ $ANSWER = 'y' ] || [ $ANSWER = 'Y' ]; then
    autogen
    configure
    compile
@@ -564,6 +566,6 @@ echo ""
 echo "To update - simply type 'genxmasternode'"
 
 cd 
-rm -rf Genesis
+rm -rf Genesis genesis
 
 do_exit
