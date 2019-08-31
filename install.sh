@@ -409,7 +409,7 @@ EOF
 create_and_configure_genesis_user(){
   echo "$MESSAGE_CREATE_USER"
   echo -n "Input User name:"
-  read $GUSER
+  read GUSER
   # create a genesis user if it doesn't exist
   #grep -q '^genesis:' /etc/passwd || sudo adduser --disabled-password --gecos "" genesis
   sudo adduser $GUSER
