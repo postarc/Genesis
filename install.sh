@@ -205,14 +205,17 @@ configure_sentinel(){
 
 start_genesisd(){
   echo "$MESSAGE_GENESISD"
-  sudo service genesisd start     # start the service
-  sudo systemctl enable genesisd  # enable at boot
+  #sudo service genesisd start     # start the service
+  #sudo systemctl enable genesisd  # enable at boot
+  su $GUSER -c 'genesisd -daemon'
   clear
 }
 
 stop_genesisd(){
   echo "$MESSAGE_STOPPING"
-  sudo service genesisd stop
+  if [ -f /usr/lib/systemd/system/genesisd.service ]; then  sudo service genesisd stop; fi
+  ERR=$(ps -u GUSER | grep genesis)
+  if [ -z "$ERR" ]; then  su $GUSER -c 'genesis-cli stop'; fi
   clear
 }
 
@@ -289,7 +292,9 @@ create_genesis_user(){
 create_configure(){
   #echo "$MESSAGE_CONFIGURE"
   # in case it's already running because this is a re-install
-  sudo service genesisd stop
+  #sudo service genesisd stop
+  ERR=$(ps -u GUSER | grep genesis)
+  if [ -z "$ERR" ]; then  su $GUSER -c 'genesis-cli stop'; fi
   # create conf directory
   echo "$GENESIS_CONF" > ~/genesis.conf  
   sudo mkdir -p /home/$GUSER/.genesis
@@ -302,13 +307,17 @@ create_configure(){
 
 create_systemd_genesisd_service(){
   echo "$MESSAGE_SYSTEMD"
+  crontab -u $GUSER -l > cron
+  echo -e "@reboot genesisd -daemon" >> cron
+  crontab -u $GUSER cron
+  rm cron
   # create systemd service
-  echo "$GENESISD_SERVICE" > ~/genesisd.service
+  #echo "$GENESISD_SERVICE" > ~/genesisd.service
   # install the service
-  sudo mkdir -p /usr/lib/systemd/system/
-  sudo mv -f ~/genesisd.service /usr/lib/systemd/system/genesisd.service
+  #sudo mkdir -p /usr/lib/systemd/system/
+  #sudo mv -f ~/genesisd.service /usr/lib/systemd/system/genesisd.service
   # reload systemd daemon
-  sudo systemctl daemon-reload
+  #sudo systemctl daemon-reload
   clear
 }
 
@@ -471,22 +480,22 @@ addnode=mainnet2.genesisnetwork.io
 EOF
 )
 
-GENESISD_SERVICE=$(cat <<EOF
-[Unit]
-Description=Genesis Official Service
-After=network.target iptables.service firewalld.service
+# GENESISD_SERVICE=$(cat <<EOF
+# [Unit]
+# Description=Genesis Official Service
+# After=network.target iptables.service firewalld.service
  
-[Service]
-Type=forking
-User=$GUSER
-ExecStart=/usr/local/bin/genesisd
-ExecStop=/usr/local/bin/genesis-cli stop && sleep 20 && /usr/bin/killall genesisd
-ExecReload=/usr/local/bin/genesis-cli stop && sleep 20 && /usr/local/bin/genesisd
+# [Service]
+# Type=forking
+# User=$GUSER
+# ExecStart=/usr/local/bin/genesisd
+# ExecStop=/usr/local/bin/genesis-cli stop && sleep 20 && /usr/bin/killall genesisd
+# ExecReload=/usr/local/bin/genesis-cli stop && sleep 20 && /usr/local/bin/genesisd
  
-[Install]
-WantedBy=multi-user.target
-EOF
-)
+# [Install]
+# WantedBy=multi-user.target
+# EOF
+# )
 
 SENTINEL_CONF=$(cat <<EOF
 # genesis conf location
