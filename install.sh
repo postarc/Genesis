@@ -272,7 +272,7 @@ masternode_private_key(){
   fi
 }
 
-create_and_configure_genesis_user(){
+create_genesis_user(){
   echo "$MESSAGE_CREATE_USER"
   read -e -p "Input User name: " GUSER
   # create a genesis user if it doesn't exist
@@ -284,16 +284,14 @@ create_and_configure_genesis_user(){
   #grep -q "genxd\(\)" ~/.bashrc || echo "genxd() { sudo su -c \"genesisd \$*\" genesis; }" >> ~/.bashrc
   #grep -q "alias genesisd" ~/.bashrc || echo "alias genesisd='genxd'" >> ~/.bashrc
   #grep -q "genxmasternode\(\)" ~/.bashrc || echo "genxmasternode() { bash <(curl -sL genesisnetwork.io/mn-installer); }" >> ~/.bashrc
+}
 
-  echo "$GENESIS_CONF" > ~/genesis.conf
-  if [ ! "$IS_MAINNET" = "" ] && [ ! "$IS_MAINNET" = "y" ] && [ ! "$IS_MAINNET" = "Y" ]; then
-    echo "$GENESIS_TESTNET_CONF" >> ~/genesis.conf
-  fi
-
+create_configure(){
+  #echo "$MESSAGE_CONFIGURE"
   # in case it's already running because this is a re-install
   sudo service genesisd stop
-
   # create conf directory
+  echo "$GENESIS_CONF" > ~/genesis.conf  
   sudo mkdir -p /home/$GUSER/.genesis
   sudo rm -rf /home/$GUSER/.genesis/debug.log
   sudo mv -f ~/genesis.conf /home/$GUSER/.genesis/genesis.conf
@@ -358,7 +356,7 @@ clear
 # errors are shown if LC_ALL is blank when you run locale
 if [ "$LC_ALL" = "" ]; then export LC_ALL="$LANG"; fi
 
-create_and_configure_genesis_user
+create_genesis_user
 
 # check to see if there is already a genesis user on the system
 if grep -q -E "^$GUSER:" /etc/passwd; then
@@ -529,6 +527,7 @@ else
 fi
 clear
 
+create_configure
 create_systemd_genesisd_service
 bootstrap
 start_genesisd
