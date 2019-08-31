@@ -511,9 +511,16 @@ git_checkout_branch
 clear
 
 # run the build steps
-autogen
-configure
-compile_install
+echo "Do you want compile bin files?(y):"
+read ANSWER
+if [ -z $ANSWER ] || [ $ANSWER = 'y' ]; then
+   autogen
+   configure
+   compile
+   install
+else
+   download
+fi
 clear
 
 create_and_configure_genesis_user
