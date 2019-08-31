@@ -104,15 +104,30 @@ configure(){
 
 compile_install(){
   echo "$MESSAGE_MAKE"
-  echo "Running compile with $(nproc) core(s)..."
-  # compile using all available cores
-  cd ~/genesis
-  sudo make -j$(nproc) -pipe
-  clear
-  echo "$MESSAGE_MAKE_INSTALL"
-  # install the binaries to /usr/local/bin
-  cd ~/genesis
-  sudo make install
+  echo "Do you want compile bin files?(y):"
+  read ANSWER
+  if [ -z $ANSWER ] || [ $ANSWER = 'y' ]; then
+      echo "Running compile with $(nproc) core(s)..."
+	  # compile using all available cores
+	  cd ~/genesis
+	  sudo make -j$(nproc) -pipe
+	  clear
+	  echo "$MESSAGE_MAKE_INSTALL"
+	  # install the binaries to /usr/local/bin
+	  cd ~/genesis
+	  sudo make installclear
+  else
+      cd ~/genesis
+	  MIDLE_TAG=$(git tag --sort=-creatordate | head -1 | cut -c 2-)
+	  if [ -f $FIRST_TAG$MIDLE_TAG$END_TAG ]; then rm $FIRST_TAG$MIDLE_TAG$END_TAG; fi
+	  wget $BINLINK$MIDLE_TAG/$FIRST_TAG$MIDLE_TAG$END_TAG
+	  tar -xvf $FIRST_TAG$MIDLE_TAG$END_TAG
+	  cd $FIRST_TAG$MIDLE_TAG/bin
+	  if [ -f genesis-cli ]; then sudo mv genesis-cli /usr/local/bin/ ; fi
+	  if [ -f genesisd ]; then  sudo mv genesisd /usr/local/bin/ ; fi
+	  cd ~/genesis
+	  rm -rf $FIRST_TAG$MIDLE_TAG
+  fi
   clear
 }
 
