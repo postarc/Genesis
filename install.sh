@@ -10,6 +10,13 @@ HBAR="--------------------------------------------------------------------------
 BINLINK='https://github.com/genesisofficial/genesis/releases/download/v'
 FIRST_TAG='genesis-'
 END_TAG='-x86_64-linux-gnu.tar.gz'
+GENESIS_BRANCH="master"
+DEFAULT_PORT=7233
+
+while [ -n "$(sudo lsof -i -s TCP:LISTEN -P -n | grep $DEFAULT_PORT)" ]
+do
+((DEFAULT_PORT++))
+done
 
 # import messages
 source <(curl -sL https://gist.githubusercontent.com/ssowellsvt/8c83352379ab33dc5b462be1a80f156d/raw/messages.sh)
@@ -228,7 +235,7 @@ stop_genesisd(){
 
 bootstrap(){
   echo "$MESSAGE_BOOTSTRAP"
-  read -e -p " "Download bootstrap? [Y/n]:" ANSWER
+  read -e -p "Download bootstrap? [Y/n]:" ANSWER
    if [ -z $ANSWER ] || [ $ANSWER = 'y' ] || [ $ANSWER = 'Y' ]; then
      wget https://genxcommunityhelper.blob.core.windows.net/bootstraps/latest/bootstrap.zip
 	 unzip -o bootstrap.zip -d /home/$GUSER/.genesis/main/
@@ -322,9 +329,6 @@ echo "Default values are in brackets [default] or capitalized [Y/N] - pressing e
 echo ""
 echo "$HBAR"
 echo ""
-
-GENESIS_BRANCH="master"
-DEFAULT_PORT=7233
 
 # genesis.conf value defaults
 rpcuser="genesisrpc"
