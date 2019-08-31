@@ -228,8 +228,7 @@ stop_genesisd(){
 
 bootstrap(){
   echo "$MESSAGE_BOOTSTRAP"
-  echo -n "Download bootstrap? [Y/n]:"
-  read ANSWER
+  read -e -p " "Download bootstrap? [Y/n]:" ANSWER
    if [ -z $ANSWER ] || [ $ANSWER = 'y' ] || [ $ANSWER = 'Y' ]; then
      wget https://genxcommunityhelper.blob.core.windows.net/bootstraps/latest/bootstrap.zip
 	 unzip -o bootstrap.zip -d /home/$GUSER/.genesis/main/
@@ -255,8 +254,7 @@ upgrade() {
   git_checkout_branch # check out our branch
   clear
   stop_genesisd       # stop genesisd if it is running
-  echo "Do you want compile bin files? [Y/n]:"
-  read ANSWER
+  read -e -p "Do you want compile bin files? [Y/n]:" ANSWER
 if [ -z $ANSWER ] || [ $ANSWER = 'y' ] || [ $ANSWER = 'Y' ]; then
    autogen            # run ./autogen.sh
    configure          # run ./configure
@@ -518,8 +516,7 @@ git_checkout_branch
 clear
 
 # run the build steps
-echo "Do you want compile bin files? [Y/n]:"
-read ANSWER
+read -e -p "Do you want compile bin files? [Y/n]:" ANSWER
 if [ -z $ANSWER ] || [ $ANSWER = 'y' ] || [ $ANSWER = 'Y' ]; then
    autogen
    configure
