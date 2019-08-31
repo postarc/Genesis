@@ -14,7 +14,7 @@ GENESIS_BRANCH="master"
 DEFAULT_PORT=7233
 ERR=$(dpkg-query -l lsof | grep Err)
 clear
-if [ -z $ERR ]; then apt install -y lsof >/dev/null 2>&1 ; fi 
+if [ -z "$ERR" ]; then apt install -y lsof >/dev/null 2>&1 ; fi 
 while [ -n "$(sudo lsof -i -s TCP:LISTEN -P -n | grep $DEFAULT_PORT)" ]
 do
 ((DEFAULT_PORT++))
