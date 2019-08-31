@@ -526,7 +526,7 @@ clear
 
 # run the build steps
 ANSWER='y'
-if [ -f /usr/lib/systemd/system/genesisd ]; then 
+if [ -f /usr/local/bin/genesisd ]; then 
 	read -e -p "Bin files exist. Do you recompile? [y/N]:" ANSWER
 #else
 	#read -e -p "Press Y for compile bin files or any key for downloading [y/N]:" ANSWER
