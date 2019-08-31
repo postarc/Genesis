@@ -129,7 +129,7 @@ install(){
   echo "$MESSAGE_MAKE_INSTALL"
   # install the binaries to /usr/local/bin
   cd ~/genesis
-  sudo make installclear
+  sudo make install
   clear
 }
 
