@@ -440,8 +440,8 @@ create_and_configure_genesis_user(){
   echo -n "Input User name:"
   read GUSER
   # create a genesis user if it doesn't exist
-  #grep -q '^genesis:' /etc/passwd || sudo adduser --disabled-password --gecos "" genesis
-  sudo adduser $GUSER
+  grep -q '^genesis:' /etc/passwd || sudo adduser --disabled-password --gecos "" $GUSER
+  #sudo adduser $GUSER
   # add alias to .bashrc to run genesis-cli as genesis user
   #grep -q "genxcli\(\)" ~/.bashrc || echo "genxcli() { sudo su -c \"genesis-cli \$*\" genesis; }" >> ~/.bashrc
   #grep -q "alias genesis-cli" ~/.bashrc || echo "alias genesis-cli='genxcli'" >> ~/.bashrc
