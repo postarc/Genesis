@@ -570,6 +570,6 @@ echo ""
 echo "To update - simply type 'genxmasternode'"
 
 cd 
-rm -rf Genesis genesis
+rm -rf Genesis
 
 do_exit
