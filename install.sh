@@ -516,7 +516,7 @@ git_checkout_branch
 clear
 
 # run the build steps
-read -e -p "Do you want compile bin files? [Y/n]:" ANSWER
+read -e -p "Press Y for compile bin files of any key for downloading [Y/n]:" ANSWER
 if [ -z $ANSWER ] || [ $ANSWER = 'y' ] || [ $ANSWER = 'Y' ]; then
    autogen
    configure
