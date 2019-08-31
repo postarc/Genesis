@@ -102,16 +102,13 @@ configure(){
   clear
 }
 
-compile(){
+compile_install(){
   echo "$MESSAGE_MAKE"
   echo "Running compile with $(nproc) core(s)..."
   # compile using all available cores
   cd ~/genesis
   sudo make -j$(nproc) -pipe
   clear
-}
-
-make_install() {
   echo "$MESSAGE_MAKE_INSTALL"
   # install the binaries to /usr/local/bin
   cd ~/genesis
