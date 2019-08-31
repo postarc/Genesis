@@ -365,8 +365,6 @@ clear
 # errors are shown if LC_ALL is blank when you run locale
 if [ "$LC_ALL" = "" ]; then export LC_ALL="$LANG"; fi
 
-create_genesis_user
-
 # check to see if there is already a genesis user on the system
 if grep -q -E "^$GUSER:" /etc/passwd; then
   clear
@@ -384,6 +382,8 @@ if grep -q -E "^$GUSER:" /etc/passwd; then
   fi
 fi
 clear
+
+create_genesis_user
 
 RESOLVED_ADDRESS=$(curl -s ipinfo.io/ip)
 
