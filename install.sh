@@ -24,26 +24,6 @@ done
 source <(curl -sL https://gist.githubusercontent.com/ssowellsvt/8c83352379ab33dc5b462be1a80f156d/raw/messages.sh)
 
 
-SENTINEL_CONF=$(cat <<EOF
-# genesis conf location
-genesis_conf=/home/$GUSER/.genesis/genesis.conf
-
-# db connection details
-db_name=/home/$GUSER/sentinel/database/sentinel.db
-db_driver=sqlite
-
-# network
-EOF
-)
-
-SENTINEL_PING=$(cat <<EOF
-#!/bin/bash
-
-~/sentinel/venv/bin/python ~/sentinel/bin/sentinel.py 2>&1 >> ~/sentinel/sentinel-cron.log
-EOF
-)
-
-
 
 pause(){
   echo ""
@@ -493,7 +473,6 @@ addnode=mainnet2.genesisnetwork.io
 EOF
 )
 
-# genesisd.service config
 GENESISD_SERVICE=$(cat <<EOF
 [Unit]
 Description=Genesis Official Service
@@ -501,10 +480,7 @@ After=network.target iptables.service firewalld.service
  
 [Service]
 Type=forking
-EOF
-)
-GENESISD_SERVICE=$GENESISD_SERVICE$(echo)$(echo -e "User=$GUSER")
-GENESISD_SERVICE=$GENESISD_SERVICE$(cat <<EOF
+User=$GUSER
 ExecStart=/usr/local/bin/genesisd
 ExecStop=/usr/local/bin/genesis-cli stop && sleep 20 && /usr/bin/killall genesisd
 ExecReload=/usr/local/bin/genesis-cli stop && sleep 20 && /usr/local/bin/genesisd
@@ -514,11 +490,27 @@ WantedBy=multi-user.target
 EOF
 )
 
-# functions to install a masternode from scratch
+SENTINEL_CONF=$(cat <<EOF
+# genesis conf location
+genesis_conf=/home/$GUSER/.genesis/genesis.conf
 
-# if there is <4gb and the user said yes to a swapfile...
+# db connection details
+db_name=/home/$GUSER/sentinel/database/sentinel.db
+db_driver=sqlite
 
-# prepare to build
+# network
+EOF
+)
+
+SENTINEL_PING=$(cat <<EOF
+#!/bin/bash
+
+~/sentinel/venv/bin/python ~/sentinel/bin/sentinel.py 2>&1 >> ~/sentinel/sentinel-cron.log
+EOF
+)
+
+
+
 # update_system
 install_dependencies
 git_clone_repository
